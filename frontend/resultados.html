@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Evaluación</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Rajdhani:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="estilos.css" />
+    <script src="comun.js"></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <p class="app-kicker">Selección HA</p>
+        <h1>Evaluación</h1>
+        <p class="muted">Admin · RescueAI compara la hoja con los requisitos</p>
+      </div>
+      <div class="header-tools">
+        <a class="boton" href="index.html">Inicio</a>
+        <button class="ghost" type="button" onclick="alternarTema()">Tema</button>
+      </div>
+    </header>
+    <main>
+      <form id="form-evaluar" class="neon-card">
+        <h2>Ficha</h2>
+        <label>Token <input name="token" required /></label>
+        <p class="hint">La llamada puede tardar. La hoja tiene que estar en estado cv_recibido.</p>
+        <button type="submit" id="enviar">Evaluar</button>
+        <div id="error" class="error" hidden></div>
+      </form>
+      <section id="resultado" class="neon-card" hidden>
+        <h2 id="fase"></h2>
+        <p class="hint" id="puntaje"></p>
+        <table>
+          <thead>
+            <tr>
+              <th>Tipo</th>
+              <th>Pedido</th>
+              <th>Cumple</th>
+              <th>Evidencia</th>
+            </tr>
+          </thead>
+          <tbody id="detalle"></tbody>
+        </table>
+      </section>
+    </main>
+    <script>
+      document.querySelector("[name=token]").value = tokenDeLaUrl();
+
+      document.getElementById("form-evaluar").onsubmit = function (evento) {
+        evento.preventDefault();
+        document.getElementById("error").hidden = true;
+        document.getElementById("resultado").hidden = true;
+        var boton = document.getElementById("enviar");
+        var token = evento.target.token.value.trim();
+        boton.disabled = true;
+        boton.textContent = "Evaluando…";
+        api("/admin/invitaciones/" + encodeURIComponent(token) + "/evaluar", { method: "POST" })
+          .then(function (resultado) {
+            document.getElementById("resultado").hidden = false;
+            document.getElementById("fase").textContent = resultado.fase_final;
+            document.getElementById("puntaje").textContent = "Puntaje: " + resultado.puntaje;
+            var filas = resultado.detalle || [];
+            document.getElementById("detalle").innerHTML = filas.length
+              ? filas
+                  .map(function (regla) {
+                    var clase = regla.cumple ? "cumple-si" : "cumple-no";
+                    return (
+                      "<tr><td>" +
+                      escapar(regla.tipo) +
+                      "</td><td>" +
+                      escapar(regla.valor) +
+                      "</td><td class='" +
+                      clase +
+                      "'>" +
+                      (regla.cumple ? "Sí" : "No") +
+                      "</td><td>" +
+                      escapar(regla.evidencia) +
+                      "</td></tr>"
+                    );
+                  })
+                  .join("")
+              : "<tr><td colspan='4'>La evaluación no devolvió reglas.</td></tr>";
+          })
+          .catch(function (error) {
+            mostrarError("error", error);
+          })
+          .finally(function () {
+            boton.disabled = false;
+            boton.textContent = "Evaluar";
+          });
+      };
+    </script>
+  </body>
+</html>

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reclutamiento</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Rajdhani:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="estilos.css" />
+    <script src="comun.js"></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <p class="app-kicker">Selección HA</p>
+        <h1>Reclutamiento</h1>
+        <p class="muted">Admin · vacantes e invitaciones</p>
+      </div>
+      <div class="header-tools">
+        <a class="boton" href="vacante_nueva.html">Nueva vacante</a>
+        <button class="ghost" type="button" onclick="alternarTema()">Tema</button>
+      </div>
+    </header>
+    <main>
+      <section class="neon-card">
+        <h2>Vacantes</h2>
+        <p class="hint">Cierra o abre cada cargo en su fila. Invitar y evaluar sigue en Nueva vacante, con el id.</p>
+        <div id="error" class="error" hidden></div>
+        <table>
+          <thead>
+            <tr>
+              <th>Id</th>
+              <th>Título</th>
+              <th>Sede</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="lista"></tbody>
+        </table>
+      </section>
+    </main>
+    <script>
+      var lista = document.getElementById("lista");
+
+      function pintar(vacantes) {
+        if (!vacantes.length) {
+          lista.innerHTML = "<tr><td colspan='5'>Todavía no hay vacantes.</td></tr>";
+          return;
+        }
+        lista.innerHTML = vacantes
+          .map(function (vacante) {
+            var abierta = vacante.estado === "abierta";
+            return (
+              "<tr data-id='" +
+              escapar(vacante.id) +
+              "'><td>" +
+              escapar(vacante.id) +
+              "</td><td>" +
+              escapar(vacante.titulo) +
+              "</td><td>" +
+              escapar(vacante.ciudad) +
+              "</td><td class='" +
+              (abierta ? "estado-abierta" : "estado-cerrada") +
+              "'>" +
+              escapar(vacante.estado) +
+              "</td><td class='acciones'><a class='enlace' href='postulaciones.html?id=" +
+              escapar(vacante.id) +
+              "'>Postulados</a><button class='btn-fila" +
+              (abierta ? " ghost" : "") +
+              "' type='button' data-estado='" +
+              (abierta ? "cerrada" : "abierta") +
+              "'>" +
+              (abierta ? "Cerrar" : "Abrir") +
+              "</button></td></tr>"
+            );
+          })
+          .join("");
+      }
+
+      function cargar() {
+        document.getElementById("error").hidden = true;
+        return api("/admin/vacantes")
+          .then(pintar)
+          .catch(function (error) {
+            mostrarError("error", error);
+          });
+      }
+
+      lista.addEventListener("click", function (evento) {
+        var boton = evento.target.closest("button");
+        if (!boton) return;
+        var fila = boton.closest("tr");
+        boton.disabled = true;
+        api("/admin/vacantes/" + fila.getAttribute("data-id"), {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ estado: boton.getAttribute("data-estado") }),
+        })
+          .then(cargar)
+          .catch(function (error) {
+            boton.disabled = false;
+            mostrarError("error", error);
+          });
+      });
+
+      cargar();
+    </script>
+  </body>
+</html>

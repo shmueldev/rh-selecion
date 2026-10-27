@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Postulado</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Rajdhani:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="estilos.css" />
+    <script src="comun.js"></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <p class="app-kicker">Selección HA</p>
+        <h1 id="nombre">Postulado</h1>
+        <p class="muted" id="quien">Detalle de ejemplo</p>
+      </div>
+      <div class="header-tools">
+        <a class="boton" id="volver" href="postulaciones.html">Postulados</a>
+        <button class="ghost" type="button" onclick="alternarTema()">Tema</button>
+      </div>
+    </header>
+    <main>
+      <div id="error" class="error" hidden></div>
+      <section id="ficha" class="neon-card" hidden>
+        <h2>Información</h2>
+        <p class="hint">Ejemplo visual. Estos datos no salen de una postulación real.</p>
+        <table>
+          <tbody id="datos"></tbody>
+        </table>
+      </section>
+      <section id="resultado" class="neon-card" hidden>
+        <h2 id="fase"></h2>
+        <p class="hint" id="puntaje"></p>
+        <table>
+          <thead>
+            <tr>
+              <th>Requisito</th>
+              <th>Pedido</th>
+              <th>Cumple</th>
+              <th>Evidencia</th>
+            </tr>
+          </thead>
+          <tbody id="detalle"></tbody>
+        </table>
+      </section>
+    </main>
+    <script>
+      var params = new URLSearchParams(window.location.search);
+      var id = params.get("id") || "";
+      var correo = params.get("correo") || "";
+      var personas = {
+        "luis@correo.test": {
+          nombre: "Luis Gómez",
+          resultado: "Pasa",
+          clase: "estado-abierta",
+          puntaje: "4",
+          datos: [
+            ["Correo", "luis@correo.test"],
+            ["Experiencia", "5 años en repuestos de motos"],
+            ["Estudios", "Técnico en mecánica"],
+            ["Idioma", "Español"],
+            ["Dónde vive", "Pasto, Nariño"],
+            ["Habilidad", "Ventas"],
+            ["Vehículo", "Moto"],
+          ],
+          detalle: [
+            ["Experiencia", "3 años", true, "5 años en repuestos de motos"],
+            ["Estudios", "Técnico en mecánica", true, "Técnico en mecánica"],
+            ["Dónde debe vivir", "Nariño", true, "Vive en Pasto, Nariño"],
+            ["Habilidad", "Ventas", true, "Experiencia vendiendo repuestos"],
+          ],
+        },
+        "maria@correo.test": {
+          nombre: "María López",
+          resultado: "No pasa",
+          clase: "estado-cerrada",
+          puntaje: "2",
+          datos: [
+            ["Correo", "maria@correo.test"],
+            ["Experiencia", "1 año en almacén"],
+            ["Estudios", "Técnico en mecánica"],
+            ["Idioma", "Español"],
+            ["Dónde vive", "Cali"],
+            ["Habilidad", "Ventas"],
+            ["Vehículo", "No tiene"],
+          ],
+          detalle: [
+            ["Experiencia", "3 años", false, "1 año en almacén"],
+            ["Estudios", "Técnico en mecánica", true, "Técnico en mecánica"],
+            ["Dónde debe vivir", "Nariño", false, "Vive en Cali"],
+            ["Habilidad", "Ventas", true, "Vendió en un almacén"],
+          ],
+        },
+      };
+
+      if (id) {
+        document.getElementById("volver").href = "postulaciones.html?id=" + encodeURIComponent(id);
+      }
+
+      var persona = personas[correo];
+      if (!id || !persona) {
+        mostrarError(
+          "error",
+          new Error(
+            id ? "No hay detalle de ejemplo para este correo." : "Falta la vacante en la dirección."
+          )
+        );
+      } else {
+        document.getElementById("nombre").textContent = persona.nombre;
+        document.getElementById("quien").textContent = correo + " · vacante " + id;
+        document.getElementById("ficha").hidden = false;
+        document.getElementById("resultado").hidden = false;
+        document.getElementById("datos").innerHTML = persona.datos
+          .map(function (fila) {
+            return "<tr><th>" + escapar(fila[0]) + "</th><td>" + escapar(fila[1]) + "</td></tr>";
+          })
+          .join("");
+        var fase = document.getElementById("fase");
+        fase.textContent = persona.resultado;
+        fase.className = persona.clase;
+        document.getElementById("puntaje").textContent = "Puntaje: " + persona.puntaje;
+        document.getElementById("detalle").innerHTML = persona.detalle
+          .map(function (regla) {
+            return (
+              "<tr><td>" +
+              escapar(regla[0]) +
+              "</td><td>" +
+              escapar(regla[1]) +
+              "</td><td class='" +
+              (regla[2] ? "cumple-si" : "cumple-no") +
+              "'>" +
+              (regla[2] ? "Sí" : "No") +
+              "</td><td>" +
+              escapar(regla[3]) +
+              "</td></tr>"
+            );
+          })
+          .join("");
+      }
+    </script>
+  </body>
+</html>

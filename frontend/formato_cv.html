@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hoja de vida</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Rajdhani:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="estilos.css" />
+    <script src="comun.js"></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <p class="app-kicker">Selección HA</p>
+        <h1>Hoja de vida</h1>
+        <p class="muted">Candidata · formato ATS</p>
+      </div>
+      <div class="header-tools">
+        <button class="ghost" type="button" onclick="alternarTema()">Tema</button>
+      </div>
+    </header>
+    <main>
+      <form id="form-hoja" class="neon-card">
+        <h2>Datos para comparar</h2>
+        <p class="hint">
+          Estos campos se envían como un solo texto JSON en contenido. Los nombres coinciden con el tipo de cada característica.
+        </p>
+        <label>Nombre <input name="nombre" required value="Ana" /></label>
+        <label>Años de experiencia <input name="anios_experiencia" required value="2" /></label>
+        <label>Título <input name="titulo" required value="contador" /></label>
+        <label>Idioma <input name="idioma" value="inglés B1" /></label>
+        <label>Ciudad <input name="ciudad" required value="Bogotá" /></label>
+        <label>Habilidad <input name="habilidad" required value="nómina" /></label>
+        <button type="submit">Enviar hoja</button>
+        <div id="error" class="error" hidden></div>
+        <div id="ok" class="ok" hidden></div>
+      </form>
+    </main>
+    <script>
+      var token = tokenDeLaUrl();
+      if (!token) {
+        mostrarError("error", new Error("Falta el token en la dirección."));
+      }
+
+      document.getElementById("form-hoja").onsubmit = function (evento) {
+        evento.preventDefault();
+        document.getElementById("error").hidden = true;
+        var form = evento.target;
+        var hoja = {
+          nombre: form.nombre.value,
+          anios_experiencia: form.anios_experiencia.value,
+          titulo: form.titulo.value,
+          idioma: form.idioma.value,
+          ciudad: form.ciudad.value,
+          habilidad: form.habilidad.value,
+        };
+        api("/postular/" + encodeURIComponent(token) + "/hoja", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contenido: JSON.stringify(hoja) }),
+        })
+          .then(function (resultado) {
+            var ok = document.getElementById("ok");
+            ok.hidden = false;
+            ok.innerHTML =
+              "Hoja guardada. Estado: " +
+              resultado.estado +
+              ". <a class='enlace' href='resultados.html?token=" +
+              encodeURIComponent(token) +
+              "'>Ir a la evaluación</a>";
+          })
+          .catch(function (error) {
+            mostrarError("error", error);
+          });
+      };
+    </script>
+  </body>
+</html>

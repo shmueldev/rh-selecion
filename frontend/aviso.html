@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aviso de datos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Rajdhani:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="estilos.css" />
+    <script src="comun.js"></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <p class="app-kicker">Selección HA</p>
+        <h1>Aviso de datos</h1>
+        <p class="muted" id="quien">Candidata · invitación</p>
+      </div>
+      <div class="header-tools">
+        <button class="ghost" type="button" onclick="alternarTema()">Tema</button>
+      </div>
+    </header>
+    <main>
+      <section class="neon-card">
+        <h2>Autorización</h2>
+        <p id="aviso-texto">
+          Autorizo a HA Bicicletas a usar mis datos personales solo para este proceso de selección.
+        </p>
+        <p class="hint" id="estado"></p>
+        <div id="error" class="error" hidden></div>
+        <div id="ok" class="ok" hidden></div>
+        <div class="acciones">
+          <button type="button" id="aceptar">Acepto</button>
+          <button class="ghost" type="button" id="rechazar">No acepto</button>
+        </div>
+      </section>
+    </main>
+    <script>
+      var token = tokenDeLaUrl();
+      var texto = document.getElementById("aviso-texto").textContent.trim();
+
+      if (!token) {
+        mostrarError("error", new Error("Falta el token en la dirección."));
+      } else {
+        api("/postular/" + encodeURIComponent(token))
+          .then(function (invitacion) {
+            document.getElementById("quien").textContent =
+              invitacion.correo + " · estado " + invitacion.estado;
+            document.getElementById("estado").textContent =
+              "Vacante " + invitacion.vacante_id + " · token " + token;
+          })
+          .catch(function (error) {
+            mostrarError("error", error);
+          });
+      }
+
+      function responder(acepta) {
+        document.getElementById("error").hidden = true;
+        api("/postular/" + encodeURIComponent(token) + "/consentimiento", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ acepta: acepta, texto_aviso: texto }),
+        })
+          .then(function (resultado) {
+            var ok = document.getElementById("ok");
+            ok.hidden = false;
+            if (resultado.acepta) {
+              ok.innerHTML =
+                "Aviso aceptado. <a class='enlace' href='formato_cv.html?token=" +
+                encodeURIComponent(token) +
+                "'>Cargar la hoja de vida</a>";
+            } else {
+              ok.textContent = "Aviso rechazado. El estado quedó en " + resultado.estado + ".";
+            }
+          })
+          .catch(function (error) {
+            mostrarError("error", error);
+          });
+      }
+
+      document.getElementById("aceptar").onclick = function () {
+        responder(true);
+      };
+      document.getElementById("rechazar").onclick = function () {
+        responder(false);
+      };
+    </script>
+  </body>
+</html>

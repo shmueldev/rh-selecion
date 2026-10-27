@@ -15,6 +15,10 @@ class VacanteEntrada(SQLModel):
     caracteristicas: list[CaracteristicaEntrada]
 
 
+class EstadoVacante(SQLModel):
+    estado: str  # abierta | cerrada
+
+
 class InvitacionEntrada(SQLModel):
     correos: list[str]
 

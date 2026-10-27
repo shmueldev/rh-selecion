@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Postulados</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Rajdhani:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="estilos.css" />
+    <script src="comun.js"></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <p class="app-kicker">Selección HA</p>
+        <h1>Postulados</h1>
+        <p class="muted" id="quien">Vacante</p>
+      </div>
+      <div class="header-tools">
+        <a class="boton" href="index.html">Inicio</a>
+        <button class="ghost" type="button" onclick="alternarTema()">Tema</button>
+      </div>
+    </header>
+    <main>
+      <section class="neon-card">
+        <h2>Postulados</h2>
+        <p class="hint">Ejemplo visual. Esta vacante todavía no consulta los postulados reales. Pasa y No pasa abren el detalle de esa persona.</p>
+        <div id="error" class="error" hidden></div>
+        <table>
+          <thead>
+            <tr>
+              <th>Correo</th>
+              <th>Estado</th>
+              <th>Resultado</th>
+              <th>Puntaje</th>
+            </tr>
+          </thead>
+          <tbody id="lista"></tbody>
+        </table>
+      </section>
+    </main>
+    <script>
+      var id = new URLSearchParams(window.location.search).get("id") || "";
+      var lista = document.getElementById("lista");
+      var filas = [
+        ["ana@correo.test", "Hoja recibida", "—", "—", ""],
+        ["luis@correo.test", "Evaluada", "Pasa", "4", "estado-abierta"],
+        ["maria@correo.test", "Evaluada", "No pasa", "2", "estado-cerrada"],
+        ["pedro@correo.test", "Sin autorización", "—", "—", ""],
+      ];
+
+      if (!id) {
+        mostrarError("error", new Error("Falta la vacante en la dirección."));
+      } else {
+        document.getElementById("quien").textContent = "Vacante " + id;
+        lista.innerHTML = filas
+          .map(function (fila) {
+            var correo = escapar(fila[0]);
+            var resultado = escapar(fila[2]);
+            if (fila[4]) {
+              var href =
+                "postulado.html?id=" +
+                encodeURIComponent(id) +
+                "&correo=" +
+                encodeURIComponent(fila[0]);
+              correo = "<a class='enlace' href='" + href + "'>" + correo + "</a>";
+              resultado = "<a class='detalle' href='" + href + "'>" + resultado + "</a>";
+            }
+            return (
+              "<tr><td>" +
+              correo +
+              "</td><td>" +
+              escapar(fila[1]) +
+              "</td><td class='" +
+              fila[4] +
+              "'>" +
+              resultado +
+              "</td><td>" +
+              escapar(fila[3]) +
+              "</td></tr>"
+            );
+          })
+          .join("");
+      }
+    </script>
+  </body>
+</html>

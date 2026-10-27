@@ -11,7 +11,7 @@ from app.models.evaluacion import Evaluacion
 from app.models.hojavida import HojaVida
 from app.models.invitacion import Invitacion
 from app.models.vacante import Vacante
-from app.schemas import InvitacionEntrada, VacanteEntrada
+from app.schemas import EstadoVacante, InvitacionEntrada, VacanteEntrada
 from app.services.evaluacion import evaluar_hoja
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -53,6 +53,21 @@ def listar_vacantes(session: SessionDep):
     return session.exec(select(Vacante)).all()
 
 
+@router.patch("/vacantes/{vacante_id}")
+def cambiar_estado(vacante_id: int, datos: EstadoVacante, session: SessionDep):
+    vacante = session.get(Vacante, vacante_id)
+    if vacante is None:
+        raise HTTPException(status_code=404, detail="La vacante no existe")
+    if datos.estado not in ("abierta", "cerrada"):
+        raise HTTPException(
+            status_code=422,
+            detail="El estado de la vancante debe ser abierta o cerrada",
+        )
+    vacante.estado = datos.estado
+    session.commit()
+    return {"id": vacante.id, "estado": vacante.estado}
+
+
 # Invitacion
 @router.post("/vacantes/{vacante_id}/invitar")
 def invitar(vacante_id: int, datos: InvitacionEntrada, session: SessionDep):
@@ -61,6 +76,9 @@ def invitar(vacante_id: int, datos: InvitacionEntrada, session: SessionDep):
     # Validamos que el id de la ruta este en Vacante
     if vacante is None:
         raise HTTPException(status_code=404, detail="La vacante no existe")
+
+    if vacante.estado == "cerrada":
+        raise HTTPException(status_code=409, detail="La vacante esta cerrada")
 
     respuestas = []
     for correo in datos.correos:

@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nueva vacante</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Rajdhani:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="estilos.css" />
+    <script src="comun.js"></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <p class="app-kicker">Selección HA</p>
+        <h1>Nueva vacante</h1>
+        <p class="muted">Admin · cargo, requisitos e invitación</p>
+      </div>
+      <div class="header-tools">
+        <a class="boton" href="index.html">Inicio</a>
+        <button class="ghost" type="button" onclick="alternarTema()">Tema</button>
+      </div>
+    </header>
+    <main>
+      <form id="form-vacante" class="neon-card">
+        <h2>Cargo</h2>
+        <label>Título <input name="titulo" required value="Asesor de ventas - Línea Motos Nariño" /></label>
+        <label>Descripción <textarea name="descripcion" required>Buscamos un asesor de ventas para la línea de motos en Nariño.</textarea></label>
+        <label>Sede <input name="ciudad" required value="Nariño" /></label>
+        <label>
+          Modalidad
+          <select name="modalidad">
+            <option value="presencial" selected>Presencial</option>
+            <option value="remoto">Remoto</option>
+            <option value="hibrido">Híbrido</option>
+          </select>
+        </label>
+        <h2>Características</h2>
+        <p class="hint">Sede es el lugar de trabajo y «Dónde debe vivir» es el requisito para el candidato. Si un requisito no aplica, deja sus dos campos vacíos.</p>
+        <div id="caracteristicas"></div>
+        <div class="acciones">
+          <button type="submit">Crear vacante</button>
+        </div>
+        <div id="error-vacante" class="error" hidden></div>
+        <div id="ok-vacante" class="ok" hidden></div>
+      </form>
+
+      <form id="form-invitar" class="neon-card">
+        <h2>Invitar</h2>
+        <label>Id de la vacante <input name="vacante_id" type="number" min="1" required /></label>
+        <label>Correos <textarea name="correos" required>ana@correo.test</textarea></label>
+        <p class="hint">Un correo por línea. El enlace de Ana abre la pantalla del aviso.</p>
+        <button type="submit">Invitar</button>
+        <div id="error-invitar" class="error" hidden></div>
+        <div id="resultado-invitar"></div>
+      </form>
+    </main>
+    <script>
+      var tipos = [
+        {
+          value: "anios_experiencia",
+          etiqueta: "Experiencia",
+          valor: "Años",
+          texto: "Frase de la oferta",
+          ejemploValor: "3",
+          ejemploTexto: "Mínimo 3 años en repuestos para motos",
+        },
+        {
+          value: "titulo",
+          etiqueta: "Estudios",
+          valor: "Qué título aceptas",
+          texto: "Frase de la oferta",
+          pistaValor: "Técnico en mecánica",
+          pistaTexto: "Título técnico en mecánica de motos",
+        },
+        {
+          value: "idioma",
+          etiqueta: "Idioma",
+          valor: "Qué idioma",
+          texto: "Frase de la oferta",
+          pistaValor: "Español",
+          pistaTexto: "Habla español",
+        },
+        {
+          value: "ciudad",
+          etiqueta: "Dónde debe vivir",
+          valor: "Ciudad o zona",
+          texto: "Frase de la oferta",
+          ejemploValor: "Nariño",
+          ejemploTexto: "Vivir en el departamento de Nariño",
+        },
+        {
+          value: "habilidad",
+          etiqueta: "Habilidad",
+          valor: "Cuál",
+          texto: "Frase de la oferta",
+          pistaValor: "Ventas",
+          pistaTexto: "Experiencia vendiendo motos o repuestos",
+        },
+        {
+          value: "vehiculo",
+          etiqueta: "Vehículo",
+          valor: "Qué vehículo",
+          texto: "Frase de la oferta",
+          pistaValor: "Moto",
+          pistaTexto: "Cuenta con moto propia para la ruta",
+        },
+      ];
+      var caja = document.getElementById("caracteristicas");
+
+      caja.innerHTML = tipos
+        .map(function (item) {
+          return (
+            "<div class=\"fila\">" +
+            "<h3 class=\"fila-titulo\">" +
+            escapar(item.etiqueta) +
+            "</h3>" +
+            "<input type=\"hidden\" name=\"tipo\" value=\"" +
+            item.value +
+            "\" />" +
+            "<label>" +
+            escapar(item.valor) +
+            "<input name=\"valor\" value=\"" +
+            escapar(item.ejemploValor || "") +
+            "\" placeholder=\"" +
+            escapar(item.pistaValor || "") +
+            "\" /></label>" +
+            "<label>" +
+            escapar(item.texto) +
+            "<input name=\"texto\" value=\"" +
+            escapar(item.ejemploTexto || "") +
+            "\" placeholder=\"" +
+            escapar(item.pistaTexto || "") +
+            "\" /></label>" +
+            "</div>"
+          );
+        })
+        .join("");
+
+      document.getElementById("form-vacante").onsubmit = function (evento) {
+        evento.preventDefault();
+        document.getElementById("error-vacante").hidden = true;
+        var form = evento.target;
+        var caracteristicas = [];
+        var incompleta = "";
+        Array.from(caja.children).forEach(function (fila) {
+          var valor = fila.querySelector("[name=valor]").value.trim();
+          var texto = fila.querySelector("[name=texto]").value.trim();
+          if (!valor && !texto) return;
+          if (!valor || !texto) {
+            incompleta = fila.querySelector(".fila-titulo").textContent;
+            return;
+          }
+          caracteristicas.push({
+            tipo: fila.querySelector("[name=tipo]").value,
+            valor: valor,
+            texto: texto,
+          });
+        });
+        if (incompleta) {
+          mostrarError(
+            "error-vacante",
+            new Error("Completa " + incompleta + ": escribe el dato y la frase de la oferta.")
+          );
+          return;
+        }
+        if (!caracteristicas.length) {
+          mostrarError("error-vacante", new Error("Escribe al menos un requisito."));
+          return;
+        }
+        api("/admin/vacantes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            titulo: form.titulo.value,
+            descripcion: form.descripcion.value,
+            ciudad: form.ciudad.value,
+            modalidad: form.modalidad.value,
+            caracteristicas: caracteristicas,
+          }),
+        })
+          .then(function (vacante) {
+            var ok = document.getElementById("ok-vacante");
+            ok.hidden = false;
+            ok.textContent = "Vacante " + vacante.id + " creada: " + vacante.titulo;
+            document.querySelector("[name=vacante_id]").value = vacante.id;
+          })
+          .catch(function (error) {
+            mostrarError("error-vacante", error);
+          });
+      };
+
+      document.getElementById("form-invitar").onsubmit = function (evento) {
+        evento.preventDefault();
+        document.getElementById("error-invitar").hidden = true;
+        var form = evento.target;
+        var correos = form.correos.value
+          .split("\n")
+          .map(function (correo) {
+            return correo.trim();
+          })
+          .filter(Boolean);
+        api("/admin/vacantes/" + form.vacante_id.value + "/invitar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ correos: correos }),
+        })
+          .then(function (respuestas) {
+            var destino = document.getElementById("resultado-invitar");
+            destino.innerHTML = respuestas
+              .map(function (item) {
+                var token = item.enlace.split("/postular/")[1];
+                return (
+                  "<article class='neon-card'><p>" +
+                  escapar(item.correo) +
+                  "</p><p class='hint'>" +
+                  escapar(item.asunto) +
+                  "</p><p><a class='enlace' href='aviso.html?token=" +
+                  encodeURIComponent(token) +
+                  "'>Abrir aviso de " +
+                  escapar(item.correo) +
+                  "</a></p><p><a class='enlace' href='resultados.html?token=" +
+                  encodeURIComponent(token) +
+                  "'>Evaluar esta ficha</a></p></article>"
+                );
+              })
+              .join("");
+          })
+          .catch(function (error) {
+            mostrarError("error-invitar", error);
+          });
+      };
+    </script>
+  </body>
+</html>
