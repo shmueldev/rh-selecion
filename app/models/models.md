@@ -1,15 +1,16 @@
 # Modelo ER — reclutamiento
 
-`Usuario` no tiene llave foránea: es la cuenta del admin y del reclutador. Las demás tablas se amarran así: una vacante tiene varias características y varias invitaciones; cada invitación tiene como máximo un consentimiento, una hoja de vida, una evaluación y una revisión.
+`Usuario` no tiene llave foránea: es la cuenta del admin y del reclutador. El correo que llega es un `Mensaje`. Solo si la persona acepta se guarda su archivo en `HojaVida` y la IA escribe `Clasificacion`. `Evaluacion` solo existe si esa clasificación quedó asignada. `Revision` la escribe el reclutador después de la evaluación.
 
 ```mermaid
 erDiagram
     VACANTE ||--o{ CARACTERISTICA : tiene
-    VACANTE ||--o{ INVITACION : recibe
-    INVITACION ||--o| CONSENTIMIENTO : responde
-    INVITACION ||--o| HOJA_VIDA : carga
-    INVITACION ||--o| EVALUACION : evalua
-    INVITACION ||--o| REVISION : decide
+    VACANTE |o--o{ CLASIFICACION : asigna
+    MENSAJE ||--o| CONSENTIMIENTO : responde
+    MENSAJE ||--o| HOJA_VIDA : carga
+    MENSAJE ||--o| CLASIFICACION : clasifica
+    MENSAJE ||--o| EVALUACION : evalua
+    MENSAJE ||--o| REVISION : decide
 
     USUARIO {
         int id PK
@@ -36,19 +37,19 @@ erDiagram
         string texto
     }
 
-    INVITACION {
+    MENSAJE {
         int id PK
-        int vacante_id FK
-        string correo
+        string message_id UK
+        string de
+        string asunto
+        datetime fecha
         string token UK
         string estado
-        datetime creada_en
-        datetime vence_en
     }
 
     CONSENTIMIENTO {
         int id PK
-        int invitacion_id FK
+        int mensaje_id FK
         bool acepta
         string texto_aviso
         string version_aviso
@@ -57,14 +58,25 @@ erDiagram
 
     HOJA_VIDA {
         int id PK
-        int invitacion_id FK
-        string contenido
+        int mensaje_id FK
+        string nombre_archivo
+        string tipo_archivo
+        blob archivo
         datetime recibida_en
+    }
+
+    CLASIFICACION {
+        int id PK
+        int mensaje_id FK
+        int vacante_id FK
+        string resultado
+        string motivo
+        datetime fecha
     }
 
     EVALUACION {
         int id PK
-        int invitacion_id FK
+        int mensaje_id FK
         string fase_final
         int puntaje
         string detalle
@@ -73,7 +85,7 @@ erDiagram
 
     REVISION {
         int id PK
-        int invitacion_id FK
+        int mensaje_id FK
         string decision
         string nota
         datetime fecha
